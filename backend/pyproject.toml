@@ -1,28 +1,23 @@
 [project]
-name = "agent"
+name = "adk-agent"
 version = "0.0.1"
-description = "Backend for the LangGraph agent"
+description = "Backend for the google-adk Agent"
 authors = [
-    { name = "Philipp Schmid", email = "schmidphilipp1995@gmail.com" },
+    { name = "John Vandivier", email = "john@ladderly.io" },
 ]
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11,<4.0"
 dependencies = [
-    "langgraph>=0.2.6",
-    "langchain>=0.3.19",
-    "langchain-google-genai",
     "python-dotenv>=1.0.1",
-    "langgraph-sdk>=0.1.57",
-    "langgraph-cli",
-    "langgraph-api",
-    "fastapi",
-    "google-genai",
+    "fastapi>=0.115.12",
+    "google-genai>=1.20.0",
+    "google-adk>=1.3.0",
 ]
 
 
 [project.optional-dependencies]
-dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
+dev = ["mypy>=1.11.1", "ruff>=0.11.13"]
 
 [build-system]
 requires = ["setuptools>=73.0.0", "wheel"]
@@ -54,6 +49,5 @@ convention = "google"
 
 [dependency-groups]
 dev = [
-    "langgraph-cli[inmem]>=0.1.71",
     "pytest>=8.3.5",
 ]
