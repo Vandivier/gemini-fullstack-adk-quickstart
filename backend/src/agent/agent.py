@@ -4,7 +4,7 @@ from google.adk.tools import google_search
 
 root_agent = Agent(
     name="pro_search_agent",
-    model=os.getenv("REASONING_MODEL", "gemini-2.0-flash-latest"),
+    model=os.getenv("REASONING_MODEL", "gemini-2.0-flash"),
     instruction=(
         "You are a helpful research assistant. First, understand the user's question. "
         "Then, use Google Search to find relevant, up-to-date information. "
