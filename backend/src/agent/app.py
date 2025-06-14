@@ -1,10 +1,35 @@
 # mypy: disable - error - code = "no-untyped-def,misc"
 import pathlib
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Request
 from fastapi.staticfiles import StaticFiles
+from google.adk.runners import InMemoryRunner
+from agent.agent import root_agent
 
 # Define the FastAPI app
 app = FastAPI()
+
+# Create an in-memory runner for the agent
+runner = InMemoryRunner(agent=root_agent)
+
+
+@app.post("/invoke")
+async def invoke(request: Request):
+    """Invokes the agent with a user query.
+
+    Args:
+        request: The request object, containing the user query in the body.
+
+    Returns:
+        The agent's response to the query.
+    """
+    # get the user query from the request body
+    body = await request.json()
+    query = body.get("query")
+
+    # invoke the agent with the user query
+    response = runner.run(user_input=query)
+
+    return {"response": response}
 
 
 def create_frontend_router(build_dir="../frontend/dist"):

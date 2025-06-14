@@ -11,6 +11,8 @@ source .venv/bin/activate
 uv pip install -r pyproject.toml 
 ```
 
-now you can run the app and devtools via make
+now you can run the app via the adk cli
 
-get a list of available make commands by running `make`
+```bash
+adk web
+```
