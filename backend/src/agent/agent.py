@@ -3,9 +3,9 @@ from agent.tools import web_search
 import os
 
 from agent.prompts import (
-    query_writer_instructions,
+    get_query_writer_instructions,
     reflection_instructions,
-    answer_instructions,
+    get_answer_instructions,
 )
 
 
@@ -14,7 +14,7 @@ from agent.prompts import (
 query_generation_agent = Agent(
     name="query_generation_agent",
     model=os.getenv("REASONING_MODEL", "gemini-1.5-flash-latest"),
-    instruction=query_writer_instructions,
+    instruction=get_query_writer_instructions(),
     description="This agent generates search queries to answer the user's question.",
 )
 
@@ -32,7 +32,7 @@ research_agent = Agent(
 # Research loop agent
 # This agent will loop through the research process until the user's question is answered.
 research_loop = LoopAgent(
-    agent=research_agent,
+    sub_agents=[research_agent],
     name="research_loop",
     description="This agent loops through the research process until the user's question is answered.",
     max_iterations=3,
@@ -52,7 +52,7 @@ reflection_agent = Agent(
 answer_agent = Agent(
     name="answer_agent",
     model=os.getenv("REASONING_MODEL", "gemini-1.5-flash-latest"),
-    instruction=answer_instructions,
+    instruction=get_answer_instructions(),
     description="This agent generates the final answer based on the research.",
 )
 
@@ -61,7 +61,7 @@ answer_agent = Agent(
 root_agent = SequentialAgent(
     name="pro_search_agent",
     description="This agent orchestrates the research process to answer the user's question.",
-    agents=[
+    sub_agents=[
         query_generation_agent,
         research_loop,
         reflection_agent,

@@ -2,6 +2,15 @@
 
 Get started with building Fullstack Agents using google-adk
 
+## usage
+
+1. populate `GEMINI_API_KEY` in `backend/.env`
+2. install the backend and front end
+3. from this root dir, `make dev`
+4. visit the UI at the location given in the CLI as a result of (2)
+
+a prompt I like to use to prove the model is connecting to the web is `what day of the week is today?`
+
 ## background and motivation
 
 this project was inspired by [gemini-fullstack-langgraph-quickstart](https://github.com/google-gemini/gemini-fullstack-langgraph-quickstart)

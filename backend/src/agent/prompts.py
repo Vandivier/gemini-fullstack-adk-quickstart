@@ -1,12 +1,12 @@
 from datetime import datetime
 
 
-# Get current date in a readable format
-def get_current_date():
+def _get_current_date():
     return datetime.now().strftime("%B %d, %Y")
 
 
-query_writer_instructions = """Your goal is to generate sophisticated and diverse web search queries. These queries are intended for an advanced automated web research tool capable of analyzing complex results, following links, and synthesizing information.
+def get_query_writer_instructions(number_queries: int = 3) -> str:
+    return f"""Your goal is to generate sophisticated and diverse web search queries. These queries are intended for an advanced automated web research tool capable of analyzing complex results, following links, and synthesizing information.
 
 Instructions:
 - Always prefer a single search query, only add another query if the original question requests multiple aspects or elements and one query is not enough.
@@ -14,7 +14,7 @@ Instructions:
 - Don't produce more than {number_queries} queries.
 - Queries should be diverse, if the topic is broad, generate more than 1 query.
 - Don't generate multiple similar queries, 1 is enough.
-- Query should ensure that the most current information is gathered. The current date is {current_date}.
+- Query should ensure that the most current information is gathered. The current date is {_get_current_date()}.
 
 Format: 
 - Format your response as a JSON object with ALL three of these exact keys:
@@ -31,23 +31,22 @@ Topic: What revenue grew more last year apple stock or the number of people buyi
 }}
 ```
 
-Context: {research_topic}"""
+Context: {{+input}}"""
 
 
-web_searcher_instructions = """Conduct targeted Google Searches to gather the most recent, credible information on "{research_topic}" and synthesize it into a verifiable text artifact.
+def get_web_searcher_instructions() -> str:
+    return f"""Conduct targeted Google Searches to gather the most recent, credible information on the user's topic and synthesize it into a verifiable text artifact.
 
 Instructions:
-- Query should ensure that the most current information is gathered. The current date is {current_date}.
+- Query should ensure that the most current information is gathered. The current date is {_get_current_date()}.
 - Conduct multiple, diverse searches to gather comprehensive information.
 - Consolidate key findings while meticulously tracking the source(s) for each specific piece of information.
 - The output should be a well-written summary or report based on your search findings. 
 - Only include the information found in the search results, don't make up any information.
-
-Research Topic:
-{research_topic}
 """
 
-reflection_instructions = """You are an expert research assistant analyzing summaries about "{research_topic}".
+
+reflection_instructions = """You are an expert research assistant analyzing the provided summaries.
 
 Instructions:
 - Identify knowledge gaps or areas that need deeper exploration and generate a follow-up query. (1 or multiple).
@@ -76,21 +75,20 @@ Example:
 Reflect carefully on the Summaries to identify knowledge gaps and produce a follow-up query. Then, produce your output following this JSON format:
 
 Summaries:
-{summaries}
+{+input}
 """
 
-answer_instructions = """Generate a high-quality answer to the user's question based on the provided summaries.
+
+def get_answer_instructions() -> str:
+    return f"""Generate a high-quality answer to the user's question based on the provided summaries.
 
 Instructions:
-- The current date is {current_date}.
+- The current date is {_get_current_date()}.
 - You are the final step of a multi-step research process, don't mention that you are the final step. 
 - You have access to all the information gathered from the previous steps.
 - You have access to the user's question.
 - Generate a high-quality answer to the user's question based on the provided summaries and the user's question.
 - you MUST include all the citations from the summaries in the answer correctly.
 
-User Context:
-- {research_topic}
-
 Summaries:
-{summaries}"""
+{{+input}}"""

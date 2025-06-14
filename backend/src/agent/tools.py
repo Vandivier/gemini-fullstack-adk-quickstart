@@ -1,7 +1,6 @@
 import os
-
 from google.genai import Client
-from agent.prompts import web_searcher_instructions, get_current_date
+from agent.prompts import get_web_searcher_instructions
 from agent.utils import (
     get_citations,
     insert_citation_markers,
@@ -25,17 +24,14 @@ def web_search(search_query: str, id: int = 0) -> dict:
         A dictionary containing the search results, including the modified text and the sources gathered.
     """
     # Configure
-    formatted_prompt = web_searcher_instructions.format(
-        current_date=get_current_date(),
-        research_topic=search_query,
-    )
+    formatted_prompt = get_web_searcher_instructions()
 
     # Uses the google genai client as the langchain client doesn't return grounding metadata
     response = genai_client.models.generate_content(
         model=os.getenv("REASONING_MODEL", "gemini-1.5-flash-latest"),
         contents=formatted_prompt,
         config={
-            "tools": [{"google_search": {}}],
+            "tools": [{"google_search": {"search_query": search_query}}],
             "temperature": 0,
         },
     )

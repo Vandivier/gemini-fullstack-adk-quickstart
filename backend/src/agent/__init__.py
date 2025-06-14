@@ -1,3 +1,7 @@
-from agent.graph import graph
+from dotenv import load_dotenv
 
-__all__ = ["graph"]
+load_dotenv()
+
+from .agent import root_agent
+
+__all__ = ["root_agent"]
