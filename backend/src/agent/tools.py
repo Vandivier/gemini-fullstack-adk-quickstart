@@ -8,7 +8,7 @@ from agent.utils import (
 )
 
 # Used for Google Search API
-genai_client = Client(api_key=os.getenv("GEMINI_API_KEY"))
+genai_client = Client(api_key=os.getenv("GOOGLE_API_KEY"))
 
 
 def web_search(search_query: str, id: int = 0) -> dict:
@@ -24,14 +24,15 @@ def web_search(search_query: str, id: int = 0) -> dict:
         A dictionary containing the search results, including the modified text and the sources gathered.
     """
     # Configure
-    formatted_prompt = get_web_searcher_instructions()
+    instructional_prompt = get_web_searcher_instructions()
+    full_prompt = f"{instructional_prompt}\n\nPlease find information on the following topic: {search_query}"
 
     # Uses the google genai client as the langchain client doesn't return grounding metadata
     response = genai_client.models.generate_content(
         model=os.getenv("REASONING_MODEL", "gemini-1.5-flash-latest"),
-        contents=formatted_prompt,
+        contents=full_prompt,
         config={
-            "tools": [{"google_search": {"search_query": search_query}}],
+            "tools": [{"google_search": {}}],
             "temperature": 0,
         },
     )
