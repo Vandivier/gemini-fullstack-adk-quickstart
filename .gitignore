@@ -40,7 +40,6 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
-uv.lock
 
 # C extensions
 *.so
