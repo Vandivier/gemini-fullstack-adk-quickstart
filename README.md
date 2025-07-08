@@ -63,6 +63,8 @@ Notably, this repo uses the Vercel AI SDK on the front end.
 
 [This article](https://medium.com/@jjaladi/langgraph-vs-adk-a-developers-guide-to-choosing-the-right-ai-agent-framework-b59f756bcd98) also provides an interesting comparison for choosing google-adk or langgraph.
 
+Learn more about building agents with the [Google ADK here](https://google.github.io/adk-docs/agents/)!
+
 ## troubleshooting
 
 1. Read this README in full, notably the bit on Copilot Instructions
