@@ -14,6 +14,13 @@ Get started with building Fullstack Agents using google-adk
 
 a prompt I like to use to prove the model is connecting to the web is `what day of the week is today?`
 
+### Run the Agent in Isolation
+
+After you complete the usage instructions, you can simply run `adk web` in the backend/ directory. Assuming you have already sourced your virtual environment,you should be able to interact with the agent in isolation on the ADK Playground at:
+<http://localhost:8000/dev-ui/?app=src>
+
+This is also useful as a troubleshooting tip, to avoid issues related to Vite, FastAPI, Docker, uvicorn, and so on.
+
 ### Copilot Instructions
 
 This app is equipped with backend/scripts/copilot-instructions.txt which can greatly improve AI assistant performance when loaded in context.
