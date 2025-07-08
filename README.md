@@ -16,11 +16,14 @@ a prompt I like to use to prove the model is connecting to the web is `what day 
 
 ## production
 
-This app can be a useful starting point for a production agent, but it's not intended to ship directly to production.
+Makefile commands assume a developer environment. The Dockerfile is encouraged for production work. Notably, it forces a static build of the frontend which is then served through the same uvicorn port (8000 by default), avoiding CORS issues.
 
-Most notably, make file commands all assume a development build and they rely on using dev server forms of the frontend and backend. If you want to deploy to production, use the Dockerfile and make sure a fresh frontend build is included for every production deployment, using `npm run build` rather than running the vite dev server in production.
+```bash
+docker build -t adk-quickstart .
+docker run -p 8000:8000 adk-quickstart
+```
 
-The FastAPI server will run your static build on port 8000, avoiding CORS issues.
+Then, visit `http://localhost:8000/app/` or your analogously configured UI URL.
 
 ## background and motivation
 
