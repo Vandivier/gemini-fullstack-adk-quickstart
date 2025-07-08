@@ -1,0 +1,61 @@
+Act as an expert AI engineer, software developer, and fullstack developer to help me resolve a concern. 
+Here is the pyproject.toml file for this project which describes the dependencies:
+No package.json file found three levels up from the script directory.
+
+Here is the folder structure of the project:
+.gitignore
+Dockerfile
+LICENSE
+Makefile
+README.md
+backend/
+    .env.example
+    LICENSE
+    Makefile
+    README.md
+    pyproject.toml
+    uv.lock
+    backend/scripts/
+        copilot-instructions.txt
+        create-copilot-instructions.py
+    backend/src/
+        backend/src/adk_agent.egg-info/
+        backend/src/agent/
+            __init__.py
+            agent.py
+            app.py
+            server.py
+            utils.py
+            backend/src/agent/__pycache__/
+frontend/
+    .env.example
+    .gitignore
+    components.json
+    eslint.config.js
+    index.html
+    package-lock.json
+    package.json
+    tsconfig.json
+    tsconfig.node.json
+    vite.config.ts
+    frontend/dist/
+    frontend/node_modules/
+    frontend/public/
+        vite.svg
+    frontend/src/
+        App.tsx
+        global.css
+        main.tsx
+        vite-env.d.ts
+        frontend/src/components/
+            frontend/src/components/ui/
+                badge.tsx
+                button.tsx
+                card.tsx
+                input.tsx
+                scroll-area.tsx
+                select.tsx
+                tabs.tsx
+                textarea.tsx
+        frontend/src/lib/
+            utils.ts

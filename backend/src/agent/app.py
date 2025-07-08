@@ -15,9 +15,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5174",
         "http://localhost:5173",
-        "http://localhost:3000",
     ],  # Frontend dev servers
     allow_credentials=True,
     allow_methods=["*"],
@@ -54,19 +52,60 @@ async def invoke(request: Request):
                 print(f"DEBUG: Found user message: '{user_message}'")
                 break
 
-        # Temporary simple response while we fix the ADK integration
-        response_text = f"Hello! You asked: '{user_message}'. This is a test response to verify our connection is working. The actual agent integration is being debugged."
+        if not user_message:
+            # No user message found, return error
+            def generate_error_stream():
+                yield '0:"No user message found in request"\n'
+                yield 'd:{"finishReason":"stop"}\n'
 
-        # Stream the response in AI SDK data stream format
+            return StreamingResponse(
+                generate_error_stream(),
+                media_type="text/plain",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "Connection": "keep-alive",
+                    "x-vercel-ai-data-stream": "v1",
+                    "Access-Control-Allow-Origin": "http://localhost:5173",
+                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "*",
+                },
+            )
+
+        # Stream the agent response in AI SDK data stream format
         def generate_data_stream():
-            # AI SDK Data Stream Protocol - split into words for streaming effect
-            words = response_text.split()
-            for word in words:
-                # Text parts format: 0:"content"\n
-                yield f'0:"{word} "\n'
+            try:
+                # Invoke the agent with the user message
+                result = runner.invoke({"query": user_message})
+                print(f"DEBUG: Agent result: {result}")
 
-            # Finish message part: d:{"finishReason":"stop"}\n
-            yield 'd:{"finishReason":"stop"}\n'
+                # Extract the response from the result
+                # The agent response is typically in result.response or similar
+                response_text = ""
+                if hasattr(result, "response"):
+                    response_text = str(result.response)
+                elif isinstance(result, dict) and "response" in result:
+                    response_text = str(result["response"])
+                elif isinstance(result, str):
+                    response_text = result
+                else:
+                    response_text = str(result)
+
+                print(f"DEBUG: Response text: {response_text}")
+
+                # Stream the response word by word for a nice typing effect
+                words = response_text.split()
+                for word in words:
+                    # Text parts format: 0:"content"\n
+                    yield f'0:"{word} "\n'
+
+                # Finish message part
+                yield 'd:{"finishReason":"stop"}\n'
+
+            except Exception as e:
+                print(f"ERROR: Agent invocation failed: {e}")
+                # Stream error message
+                yield f'0:"Sorry, I encountered an error while processing your request: {str(e)}"\n'
+                yield 'd:{"finishReason":"stop"}\n'
 
         return StreamingResponse(
             generate_data_stream(),
@@ -84,17 +123,55 @@ async def invoke(request: Request):
         # Legacy format - direct query
         query = body.get("query")
 
-        # Temporary simple response while we fix the ADK integration
-        response = f"Hello! You asked: '{query}'. This is a test response to verify our connection is working. The actual agent integration is being debugged."
-        return Response(
-            content=json.dumps({"response": response}),
-            media_type="application/json",
-            headers={
-                "Access-Control-Allow-Origin": "http://localhost:5173",
-                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*",
-            },
-        )
+        if not query:
+            return Response(
+                content=json.dumps({"error": "No query provided"}),
+                media_type="application/json",
+                status_code=400,
+                headers={
+                    "Access-Control-Allow-Origin": "http://localhost:5173",
+                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "*",
+                },
+            )
+
+        try:
+            # Invoke the agent with the query
+            result = runner.invoke({"query": query})
+            print(f"DEBUG: Agent result: {result}")
+
+            # Extract the response from the result
+            response_text = ""
+            if hasattr(result, "response"):
+                response_text = str(result.response)
+            elif isinstance(result, dict) and "response" in result:
+                response_text = str(result["response"])
+            elif isinstance(result, str):
+                response_text = result
+            else:
+                response_text = str(result)
+
+            return Response(
+                content=json.dumps({"response": response_text}),
+                media_type="application/json",
+                headers={
+                    "Access-Control-Allow-Origin": "http://localhost:5173",
+                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "*",
+                },
+            )
+        except Exception as e:
+            print(f"ERROR: Agent invocation failed: {e}")
+            return Response(
+                content=json.dumps({"error": f"Agent invocation failed: {str(e)}"}),
+                media_type="application/json",
+                status_code=500,
+                headers={
+                    "Access-Control-Allow-Origin": "http://localhost:5173",
+                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                    "Access-Control-Allow-Headers": "*",
+                },
+            )
 
 
 @app.options("/invoke")
