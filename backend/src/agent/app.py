@@ -4,12 +4,42 @@ from fastapi import FastAPI, Response, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-from google.adk.runners import InMemoryRunner
 from agent import root_agent
 import json
+import asyncio
+from contextlib import asynccontextmanager
+
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.genai import types
+
+# --- ADK Setup ---
+# This follows the modern programmatic pattern for running an ADK agent.
+APP_NAME = "adk-quickstart-app"
+USER_ID = "default_user"
+SESSION_ID = "default_session"
+
+# 1. Set up session management
+session_service = InMemorySessionService()
+
+# 2. Create a Runner for the agent
+runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
+# --- End ADK Setup ---
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create the default session on startup
+    await session_service.create_session(
+        app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID
+    )
+    yield
+    # No cleanup needed for in-memory session service
+
 
 # Define the FastAPI app
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
+
 
 # Add CORS middleware for frontend development
 app.add_middleware(
@@ -21,9 +51,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Create an in-memory runner for the agent
-runner = InMemoryRunner(agent=root_agent)
 
 
 @app.post("/invoke")
@@ -72,28 +99,27 @@ async def invoke(request: Request):
             )
 
         # Stream the agent response in AI SDK data stream format
-        def generate_data_stream():
+        async def generate_data_stream():
             try:
-                # Invoke the agent with the user message
-                result = runner.invoke({"query": user_message})
-                print(f"DEBUG: Agent result: {result}")
-
-                # Extract the response from the result
-                # The agent response is typically in result.response or similar
+                user_content = types.Content(
+                    role="user", parts=[types.Part(text=user_message)]
+                )
                 response_text = ""
-                if hasattr(result, "response"):
-                    response_text = str(result.response)
-                elif isinstance(result, dict) and "response" in result:
-                    response_text = str(result["response"])
-                elif isinstance(result, str):
-                    response_text = result
-                else:
-                    response_text = str(result)
+                async for event in runner.run_async(
+                    user_id=USER_ID, session_id=SESSION_ID, new_message=user_content
+                ):
+                    if event.is_final_response() and event.content:
+                        response_text = event.content.parts[0].text
 
                 print(f"DEBUG: Response text: {response_text}")
 
                 # Stream the response word by word for a nice typing effect
                 words = response_text.split()
+                if not words:
+                    # Handle empty response
+                    yield 'd:{"finishReason":"stop"}\n'
+                    return
+
                 for word in words:
                     # Text parts format: 0:"content"\n
                     yield f'0:"{word} "\n'
@@ -136,20 +162,16 @@ async def invoke(request: Request):
             )
 
         try:
-            # Invoke the agent with the query
-            result = runner.invoke({"query": query})
-            print(f"DEBUG: Agent result: {result}")
-
-            # Extract the response from the result
+            user_content = types.Content(role="user", parts=[types.Part(text=query)])
             response_text = ""
-            if hasattr(result, "response"):
-                response_text = str(result.response)
-            elif isinstance(result, dict) and "response" in result:
-                response_text = str(result["response"])
-            elif isinstance(result, str):
-                response_text = result
-            else:
-                response_text = str(result)
+
+            async for event in runner.run_async(
+                user_id=USER_ID, session_id=SESSION_ID, new_message=user_content
+            ):
+                if event.is_final_response() and event.content:
+                    response_text = event.content.parts[0].text
+
+            print(f"DEBUG: Final response text: {response_text}")
 
             return Response(
                 content=json.dumps({"response": response_text}),
