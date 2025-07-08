@@ -27,3 +27,7 @@ Other interesting Google Quickstarts:
 
 It's also interesting to compare a more fully-featured agentic app:
 [gng-ai](https://github.com/Vandivier/gng-ai): google-centric dnd with agents
+
+Notably, this repo uses the Vercel AI SDK on the front end.
+
+[This article](https://medium.com/@jjaladi/langgraph-vs-adk-a-developers-guide-to-choosing-the-right-ai-agent-framework-b59f756bcd98) also provides an interesting comparison for choosing google-adk or langgraph.

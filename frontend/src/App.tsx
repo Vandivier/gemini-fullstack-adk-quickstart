@@ -1,179 +1,175 @@
-import { useStream } from "@langchain/langgraph-sdk/react";
-import type { Message } from "@langchain/langgraph-sdk";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { ProcessedEvent } from "@/components/ActivityTimeline";
-import { WelcomeScreen } from "@/components/WelcomeScreen";
-import { ChatMessagesView } from "@/components/ChatMessagesView";
+import { useChat } from "@ai-sdk/react";
+import { useState } from "react";
 
 export default function App() {
-  const [processedEventsTimeline, setProcessedEventsTimeline] = useState<
-    ProcessedEvent[]
-  >([]);
-  const [historicalActivities, setHistoricalActivities] = useState<
-    Record<string, ProcessedEvent[]>
-  >({});
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const hasFinalizeEventOccurredRef = useRef(false);
+  const [effort, setEffort] = useState<string>("medium");
 
-  const thread = useStream<{
-    messages: Message[];
-    initial_search_query_count: number;
-    max_research_loops: number;
-  }>({
-    apiUrl: import.meta.env.DEV
-      ? "http://localhost:2024"
-      : "http://localhost:8123",
-    assistantId: "agent",
-    messagesKey: "messages",
-    onFinish: (event: any) => {
-      console.log(event);
-    },
-    onUpdateEvent: (event: any) => {
-      let processedEvent: ProcessedEvent | null = null;
-      if (event.generate_query) {
-        processedEvent = {
-          title: "Generating Search Queries",
-          data: event.generate_query.query_list.join(", "),
-        };
-      } else if (event.web_research) {
-        const sources = event.web_research.sources_gathered || [];
-        const numSources = sources.length;
-        const uniqueLabels = [
-          ...new Set(sources.map((s: any) => s.label).filter(Boolean)),
-        ];
-        const exampleLabels = uniqueLabels.slice(0, 3).join(", ");
-        processedEvent = {
-          title: "Web Research",
-          data: `Gathered ${numSources} sources. Related to: ${
-            exampleLabels || "N/A"
-          }.`,
-        };
-      } else if (event.reflection) {
-        processedEvent = {
-          title: "Reflection",
-          data: event.reflection.is_sufficient
-            ? "Search successful, generating final answer."
-            : `Need more information, searching for ${event.reflection.follow_up_queries.join(
-                ", "
-              )}`,
-        };
-      } else if (event.finalize_answer) {
-        processedEvent = {
-          title: "Finalizing Answer",
-          data: "Composing and presenting the final answer.",
-        };
-        hasFinalizeEventOccurredRef.current = true;
-      }
-      if (processedEvent) {
-        setProcessedEventsTimeline((prevEvents) => [
-          ...prevEvents,
-          processedEvent!,
-        ]);
-      }
-    },
-  });
+  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } =
+    useChat({
+      api: `${
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
+      }/invoke`,
+      initialMessages: [],
+    });
 
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollViewport = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]"
-      );
-      if (scrollViewport) {
-        scrollViewport.scrollTop = scrollViewport.scrollHeight;
-      }
-    }
-  }, [thread.messages]);
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
 
-  useEffect(() => {
-    if (
-      hasFinalizeEventOccurredRef.current &&
-      !thread.isLoading &&
-      thread.messages.length > 0
-    ) {
-      const lastMessage = thread.messages[thread.messages.length - 1];
-      if (lastMessage && lastMessage.type === "ai" && lastMessage.id) {
-        setHistoricalActivities((prev) => ({
-          ...prev,
-          [lastMessage.id!]: [...processedEventsTimeline],
-        }));
-      }
-      hasFinalizeEventOccurredRef.current = false;
-    }
-  }, [thread.messages, thread.isLoading, processedEventsTimeline]);
+    // Add effort level to the message (though our current backend doesn't use it)
+    // We could modify the backend later to use this
+    handleSubmit(e);
+  };
 
-  const handleSubmit = useCallback(
-    (submittedInputValue: string, effort: string) => {
-      if (!submittedInputValue.trim()) return;
-      setProcessedEventsTimeline([]);
-      hasFinalizeEventOccurredRef.current = false;
-
-      // convert effort to, initial_search_query_count and max_research_loops
-      // low means max 1 loop and 1 query
-      // medium means max 3 loops and 3 queries
-      // high means max 10 loops and 5 queries
-      let initial_search_query_count = 0;
-      let max_research_loops = 0;
-      switch (effort) {
-        case "low":
-          initial_search_query_count = 1;
-          max_research_loops = 1;
-          break;
-        case "medium":
-          initial_search_query_count = 3;
-          max_research_loops = 3;
-          break;
-        case "high":
-          initial_search_query_count = 5;
-          max_research_loops = 10;
-          break;
-      }
-
-      const newMessages: Message[] = [
-        ...(thread.messages || []),
-        {
-          type: "human",
-          content: submittedInputValue,
-          id: Date.now().toString(),
-        },
-      ];
-      thread.submit({
-        messages: newMessages,
-        initial_search_query_count: initial_search_query_count,
-        max_research_loops: max_research_loops,
-      });
-    },
-    [thread]
-  );
-
-  const handleCancel = useCallback(() => {
-    thread.stop();
+  const handleCancel = () => {
+    stop();
     window.location.reload();
-  }, [thread]);
+  };
 
   return (
     <div className="flex h-screen bg-neutral-800 text-neutral-100 font-sans antialiased">
       <main className="flex-1 flex flex-col overflow-hidden max-w-4xl mx-auto w-full">
-        <div
-          className={`flex-1 overflow-y-auto ${
-            thread.messages.length === 0 ? "flex" : ""
-          }`}
-        >
-          {thread.messages.length === 0 ? (
-            <WelcomeScreen
-              handleSubmit={handleSubmit}
-              isLoading={thread.isLoading}
-              onCancel={handleCancel}
-            />
+        <div className="flex-1 overflow-y-auto p-4">
+          {messages.length === 0 ? (
+            // Welcome Screen
+            <div className="flex flex-col items-center justify-center h-full space-y-6">
+              <div className="text-center space-y-4">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                  AI Research Assistant
+                </h1>
+                <p className="text-xl text-neutral-400 max-w-2xl">
+                  Ask me anything and I'll search the web to provide you with
+                  accurate, up-to-date information.
+                </p>
+              </div>
+
+              <div className="w-full max-w-2xl space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm text-neutral-400">
+                    Research Effort Level:
+                  </label>
+                  <select
+                    value={effort}
+                    onChange={(e) => setEffort(e.target.value)}
+                    className="w-full p-3 bg-neutral-700 border border-neutral-600 rounded-lg text-neutral-100 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="low">Low - Quick search</option>
+                    <option value="medium">Medium - Balanced research</option>
+                    <option value="high">High - Thorough investigation</option>
+                  </select>
+                </div>
+
+                <form onSubmit={handleFormSubmit} className="space-y-3">
+                  <textarea
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder="What would you like to research?"
+                    className="w-full p-4 bg-neutral-700 border border-neutral-600 rounded-lg text-neutral-100 placeholder-neutral-400 focus:border-blue-500 focus:outline-none resize-none"
+                    rows={4}
+                    disabled={isLoading}
+                  />
+                  <div className="flex space-x-3">
+                    <button
+                      type="submit"
+                      disabled={!input.trim() || isLoading}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                    >
+                      {isLoading ? "Researching..." : "Start Research"}
+                    </button>
+                    {isLoading && (
+                      <button
+                        type="button"
+                        onClick={handleCancel}
+                        className="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            </div>
           ) : (
-            <ChatMessagesView
-              messages={thread.messages}
-              isLoading={thread.isLoading}
-              scrollAreaRef={scrollAreaRef}
-              onSubmit={handleSubmit}
-              onCancel={handleCancel}
-              liveActivityEvents={processedEventsTimeline}
-              historicalActivities={historicalActivities}
-            />
+            // Chat Messages View
+            <div className="space-y-6">
+              {messages.map((message) => (
+                <div key={message.id} className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        message.role === "user"
+                          ? "bg-blue-600 text-white"
+                          : "bg-green-600 text-white"
+                      }`}
+                    >
+                      {message.role === "user" ? "U" : "AI"}
+                    </div>
+                    <span className="text-sm text-neutral-400 capitalize">
+                      {message.role === "user" ? "You" : "AI Assistant"}
+                    </span>
+                  </div>
+                  <div
+                    className={`p-4 rounded-lg ${
+                      message.role === "user"
+                        ? "bg-blue-600/20 border border-blue-600/30"
+                        : "bg-neutral-700 border border-neutral-600"
+                    }`}
+                  >
+                    <div className="prose prose-invert max-w-none">
+                      {message.content}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {isLoading && (
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold">
+                      AI
+                    </div>
+                    <span className="text-sm text-neutral-400">
+                      AI Assistant
+                    </span>
+                  </div>
+                  <div className="p-4 bg-neutral-700 border border-neutral-600 rounded-lg">
+                    <div className="flex items-center space-x-2 text-neutral-400">
+                      <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                      <span>Researching your question...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* New message form */}
+              <form onSubmit={handleFormSubmit} className="space-y-3">
+                <div className="flex space-x-3">
+                  <input
+                    value={input}
+                    onChange={handleInputChange}
+                    placeholder="Ask a follow-up question..."
+                    className="flex-1 p-3 bg-neutral-700 border border-neutral-600 rounded-lg text-neutral-100 placeholder-neutral-400 focus:border-blue-500 focus:outline-none"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || isLoading}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-600 disabled:cursor-not-allowed text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                  >
+                    Send
+                  </button>
+                  {isLoading && (
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                    >
+                      Stop
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
           )}
         </div>
       </main>
