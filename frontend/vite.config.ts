@@ -12,5 +12,4 @@ export default defineConfig({
       "@": path.resolve(new URL(".", import.meta.url).pathname, "./src"),
     },
   },
-  // No proxy needed - backend serves both frontend and API
 });

@@ -14,6 +14,14 @@ Get started with building Fullstack Agents using google-adk
 
 a prompt I like to use to prove the model is connecting to the web is `what day of the week is today?`
 
+## production
+
+This app can be a useful starting point for a production agent, but it's not intended to ship directly to production.
+
+Most notably, make file commands all assume a development build and they rely on using dev server forms of the frontend and backend. If you want to deploy to production, use the Dockerfile and make sure a fresh frontend build is included for every production deployment, using `npm run build` rather than running the vite dev server in production.
+
+The FastAPI server will run your static build on port 8000, avoiding CORS issues.
+
 ## background and motivation
 
 this project was inspired by [gemini-fullstack-langgraph-quickstart](https://github.com/google-gemini/gemini-fullstack-langgraph-quickstart)
