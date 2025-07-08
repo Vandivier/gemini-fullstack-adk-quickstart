@@ -55,26 +55,26 @@ async def invoke(request: Request):
                 break
 
         # Temporary simple response while we fix the ADK integration
-        response = f"Hello! You asked: '{user_message}'. This is a test response to verify our connection is working. The actual agent integration is being debugged."
+        response_text = f"Hello! You asked: '{user_message}'. This is a test response to verify our connection is working. The actual agent integration is being debugged."
 
-        # Stream the response in AI SDK compatible format
-        def generate_stream():
-            # AI SDK expects Server-Sent Events format
-            words = response.split()
-            for i, word in enumerate(words):
-                chunk = word + (" " if i < len(words) - 1 else "")
-                # Send as text/event-stream format
-                yield f"0:{chunk}\n"
+        # Stream the response in AI SDK data stream format
+        def generate_data_stream():
+            # AI SDK Data Stream Protocol - split into words for streaming effect
+            words = response_text.split()
+            for word in words:
+                # Text parts format: 0:"content"\n
+                yield f'0:"{word} "\n'
 
-            # End the stream
-            yield "d:\n"
+            # Finish message part: d:{"finishReason":"stop"}\n
+            yield 'd:{"finishReason":"stop"}\n'
 
         return StreamingResponse(
-            generate_stream(),
-            media_type="text/plain; charset=utf-8",
+            generate_data_stream(),
+            media_type="text/plain",
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
+                "x-vercel-ai-data-stream": "v1",  # Required for AI SDK data stream
                 "Access-Control-Allow-Origin": "http://localhost:5173",
                 "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
                 "Access-Control-Allow-Headers": "*",
