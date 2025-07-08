@@ -1,6 +1,6 @@
 [project]
 name = "adk-agent"
-version = "0.0.1"
+version = "0.0.2"
 description = "Backend for the google-adk Agent"
 authors = [
     { name = "John Vandivier", email = "john@ladderly.io" },

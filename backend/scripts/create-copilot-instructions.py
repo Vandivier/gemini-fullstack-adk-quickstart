@@ -4,21 +4,19 @@ import os
 import pathspec
 
 
-def read_package_json(script_path):
-    """Reads and returns the full content of pyproject.toml located three levels up from the script's directory."""
-    package_json_path = (
-        script_path.parents[2] / "pyproject.toml"
-    )  # Navigate three levels up
+def read_pyproject_toml(script_path):
+    """Reads and returns the full content of pyproject.toml located in the script's directory."""
+    pyproject_toml_path = script_path.parent.parent / "pyproject.toml"
 
-    if not package_json_path.exists():
-        return "No package.json file found three levels up from the script directory."
+    if not pyproject_toml_path.exists():
+        return "No pyproject.toml file found in the script directory."
 
-    with open(package_json_path, "r") as file:
+    with open(pyproject_toml_path, "r") as file:
         try:
-            package_content = file.read()
-            return f"Full package.json content:\n{package_content}"
+            pyproject_content = file.read()
+            return pyproject_content
         except Exception as e:
-            return f"Error reading package.json file: {e}"
+            return f"Error reading pyproject.toml file: {e}"
 
 
 def get_folder_structure(script_path, ignore_file=".gitignore"):
@@ -72,13 +70,14 @@ def get_folder_structure(script_path, ignore_file=".gitignore"):
 
 
 def create_copilot_instructions():
-    """Creates the copilot-instructions.txt file."""
+    """Creates the copilot-instructions.txt file and prints pyproject.toml content to stdout."""
     script_path = Path(__file__).resolve()
+    pyproject_content = read_pyproject_toml(script_path)
     instructions = (
         "Act as an expert AI engineer, software developer, and fullstack developer to help me resolve a concern. "
         "\n"
         "Here is the pyproject.toml file for this project which describes the dependencies:\n"
-        f"{read_package_json(script_path)}\n\n"
+        f"```\n{pyproject_content}\n```\n\n"
         "Here is the folder structure of the project:\n"
         f"{get_folder_structure(script_path)}"
     )

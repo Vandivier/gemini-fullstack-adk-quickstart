@@ -1,6 +1,61 @@
 Act as an expert AI engineer, software developer, and fullstack developer to help me resolve a concern. 
 Here is the pyproject.toml file for this project which describes the dependencies:
-No package.json file found three levels up from the script directory.
+```
+[project]
+name = "adk-agent"
+version = "0.0.2"
+description = "Backend for the google-adk Agent"
+authors = [
+    { name = "John Vandivier", email = "john@ladderly.io" },
+]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11,<4.0"
+dependencies = [
+    "python-dotenv>=1.0.1",
+    "fastapi>=0.115.12",
+    "google-adk>=1.5.0",
+    "google-genai>=1.24.0",
+]
+
+
+[project.optional-dependencies]
+dev = ["mypy>=1.11.1", "ruff>=0.11.13"]
+
+[build-system]
+requires = ["setuptools>=73.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+lint.select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "D",    # pydocstyle
+    "D401", # First line should be in imperative mood
+    "T201",
+    "UP",
+]
+lint.ignore = [
+    "UP006",
+    "UP007",
+    # We actually do want to import from typing_extensions
+    "UP035",
+    # Relax the convention by _not_ requiring documentation for every function parameter.
+    "D417",
+    "E501",
+]
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D", "UP"]
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+]
+
+```
 
 Here is the folder structure of the project:
 .gitignore
