@@ -40,46 +40,42 @@ async def invoke(request: Request):
         The agent's response (JSON for legacy, streaming for AI SDK).
     """
     body = await request.json()
+    print(f"DEBUG: Received body: {json.dumps(body, indent=2)}")
 
     # Check if this is an AI SDK request (has 'messages' field)
     if "messages" in body:
         # AI SDK format - extract latest user message
         messages = body.get("messages", [])
+        print(f"DEBUG: Messages array: {messages}")
         user_message = ""
         for message in reversed(messages):
             if message.get("role") == "user":
                 user_message = message.get("content", "")
+                print(f"DEBUG: Found user message: '{user_message}'")
                 break
 
-        # Get response from agent
-        response = runner.run(user_input=user_message)
+        # Temporary simple response while we fix the ADK integration
+        response = f"Hello! You asked: '{user_message}'. This is a test response to verify our connection is working. The actual agent integration is being debugged."
 
-        # Stream the response in a format compatible with AI SDK
+        # Stream the response in AI SDK compatible format
         def generate_stream():
-            # Split response into chunks for streaming effect
+            # AI SDK expects Server-Sent Events format
             words = response.split()
             for i, word in enumerate(words):
-                chunk_data = {
-                    "choices": [
-                        {
-                            "delta": {
-                                "content": word + (" " if i < len(words) - 1 else "")
-                            }
-                        }
-                    ]
-                }
-                yield f"data: {json.dumps(chunk_data)}\n\n"
+                chunk = word + (" " if i < len(words) - 1 else "")
+                # Send as text/event-stream format
+                yield f"0:{chunk}\n"
 
-            # End stream
-            yield "data: [DONE]\n\n"
+            # End the stream
+            yield "d:\n"
 
         return StreamingResponse(
             generate_stream(),
-            media_type="text/plain",
+            media_type="text/plain; charset=utf-8",
             headers={
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
-                "Access-Control-Allow-Origin": "http://localhost:5174",
+                "Access-Control-Allow-Origin": "http://localhost:5173",
                 "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
                 "Access-Control-Allow-Headers": "*",
             },
@@ -87,12 +83,14 @@ async def invoke(request: Request):
     else:
         # Legacy format - direct query
         query = body.get("query")
-        response = runner.run(user_input=query)
+
+        # Temporary simple response while we fix the ADK integration
+        response = f"Hello! You asked: '{query}'. This is a test response to verify our connection is working. The actual agent integration is being debugged."
         return Response(
             content=json.dumps({"response": response}),
             media_type="application/json",
             headers={
-                "Access-Control-Allow-Origin": "http://localhost:5174",
+                "Access-Control-Allow-Origin": "http://localhost:5173",
                 "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
                 "Access-Control-Allow-Headers": "*",
             },
@@ -105,7 +103,7 @@ async def invoke_options():
     return Response(
         content="",
         headers={
-            "Access-Control-Allow-Origin": "http://localhost:5174",
+            "Access-Control-Allow-Origin": "http://localhost:5173",
             "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
             "Access-Control-Allow-Headers": "*",
         },

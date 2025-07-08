@@ -8,7 +8,9 @@ Get started with building Fullstack Agents using google-adk
 2. install the backend and front end
 3. activate the backend uv venv, as mentioned in backend/README.md
 4. from this root dir, with the uv venv active, `make dev`
-5. visit the UI at the location given in the CLI as a result of (2)
+5. verify servers are running on ports 5173 (frontend) and 8000 (backend)
+    a. if this is not the case, consider running `make cleanup`
+6. visit the UI at the location given in the CLI as a result of (2)
 
 a prompt I like to use to prove the model is connecting to the web is `what day of the week is today?`
 
