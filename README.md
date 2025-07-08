@@ -2,7 +2,7 @@
 
 Get started with building Fullstack Agents using google-adk
 
-## usage
+## Usage
 
 1. populate `GEMINI_API_KEY` in `backend/.env`
 2. install the backend and front end
@@ -14,7 +14,15 @@ Get started with building Fullstack Agents using google-adk
 
 a prompt I like to use to prove the model is connecting to the web is `what day of the week is today?`
 
-## production
+### Copilot Instructions
+
+This app is equipped with backend/scripts/copilot-instructions.txt which can greatly improve AI assistant performance when loaded in context.
+
+Refresh the instructions with `make instructions`.
+
+Try using a few different models and using the web search tool.
+
+## Production
 
 Makefile commands assume a developer environment. The Dockerfile is encouraged for production work. Notably, it forces a static build of the frontend which is then served through the same uvicorn port (8000 by default), avoiding CORS issues.
 
@@ -24,6 +32,16 @@ docker run -p 8000:8000 adk-quickstart
 ```
 
 Then, visit `http://localhost:8000/app/` or your analogously configured UI URL.
+
+## Contributing
+
+Bug fixes, documentation improvements, and version bumps are all welcome!
+
+This is intended to be a basic agent boilerplate. As such, please make feature requests elsewhere. Three better-fit locations for those requests include:
+
+1. [basic-gemini-chat](https://github.com/Vandivier/basic-gemini-chat), a collection of various gemini apps and architectures
+2. [genai-oneshots](https://github.com/Vandivier/genai-oneshots), a collection for all kinds of Generative AI applications, including WIP and vibe coded projects
+3. Chat about making a totally new app with the [Ladderly.io](https://www.ladderly.io/) community on [Discord](https://discord.com/invite/fAg6Xa4uxc)
 
 ## background and motivation
 
@@ -44,3 +62,12 @@ It's also interesting to compare a more fully-featured agentic app:
 Notably, this repo uses the Vercel AI SDK on the front end.
 
 [This article](https://medium.com/@jjaladi/langgraph-vs-adk-a-developers-guide-to-choosing-the-right-ai-agent-framework-b59f756bcd98) also provides an interesting comparison for choosing google-adk or langgraph.
+
+## troubleshooting
+
+1. Read this README in full, notably the bit on Copilot Instructions
+2. try running the app three different ways to help pinpoint your issue:
+    1. `make dev`
+    2. `make debug-dev`
+    3. through Docker
+3. if you `npm run build` the ui and run that static build locally, be sure to clear your cache and rebuild when you make changes.
