@@ -80,7 +80,7 @@ backend/
             agent.py
             app.py
             server.py
-            utils.py
+            tools.py
             backend/src/agent/__pycache__/
 frontend/
     .env.example
