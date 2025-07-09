@@ -92,9 +92,6 @@ async def invoke(request: Request):
                     "Cache-Control": "no-cache",
                     "Connection": "keep-alive",
                     "x-vercel-ai-data-stream": "v1",
-                    "Access-Control-Allow-Origin": "http://localhost:5173",
-                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "*",
                 },
             )
 
@@ -140,9 +137,6 @@ async def invoke(request: Request):
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
                 "x-vercel-ai-data-stream": "v1",  # Required for AI SDK data stream
-                "Access-Control-Allow-Origin": "http://localhost:5173",
-                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                "Access-Control-Allow-Headers": "*",
             },
         )
     else:
@@ -154,11 +148,6 @@ async def invoke(request: Request):
                 content=json.dumps({"error": "No query provided"}),
                 media_type="application/json",
                 status_code=400,
-                headers={
-                    "Access-Control-Allow-Origin": "http://localhost:5173",
-                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "*",
-                },
             )
 
         try:
@@ -176,11 +165,6 @@ async def invoke(request: Request):
             return Response(
                 content=json.dumps({"response": response_text}),
                 media_type="application/json",
-                headers={
-                    "Access-Control-Allow-Origin": "http://localhost:5173",
-                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "*",
-                },
             )
         except Exception as e:
             print(f"ERROR: Agent invocation failed: {e}")
@@ -188,25 +172,7 @@ async def invoke(request: Request):
                 content=json.dumps({"error": f"Agent invocation failed: {str(e)}"}),
                 media_type="application/json",
                 status_code=500,
-                headers={
-                    "Access-Control-Allow-Origin": "http://localhost:5173",
-                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-                    "Access-Control-Allow-Headers": "*",
-                },
             )
-
-
-@app.options("/invoke")
-async def invoke_options():
-    """Handle preflight CORS requests for /invoke endpoint."""
-    return Response(
-        content="",
-        headers={
-            "Access-Control-Allow-Origin": "http://localhost:5173",
-            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
-        },
-    )
 
 
 def create_frontend_router(build_dir="../frontend/dist"):
